@@ -2,16 +2,13 @@ package fr.caensup.licsts.meteovilles;
 
 import android.os.Bundle;
 
-import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +16,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -28,9 +27,12 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EditText etCityName;
-    private Button btnGetWeather;
-    private TextView tvWeatherResult;
+    private EditText etNewCity;
+    private Button btnAddCity, btnRefresh;
+    private ListView lvCities;
+
+    private List<City> cities;
+    private CityAdapter adapter;
 
     private final String API_KEY = "f476e0b3c03f1d0a2a074ffe2ce51e5b";
 
@@ -39,24 +41,53 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        etCityName = findViewById(R.id.etCityName);
-        btnGetWeather = findViewById(R.id.btnGetWeather);
-        tvWeatherResult = findViewById(R.id.tvWeatherResult);
+        etNewCity = findViewById(R.id.etNewCity);
+        btnAddCity = findViewById(R.id.btnAddCity);
+        btnRefresh = findViewById(R.id.btnRefresh);
+        lvCities = findViewById(R.id.lvCities);
 
-        btnGetWeather.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String cityName = etCityName.getText().toString().trim();
-                if (cityName.isEmpty()) {
-                    Toast.makeText(MainActivity.this, "Entrez une ville", Toast.LENGTH_SHORT).show();
-                } else {
-                    getWeatherData(cityName);
-                }
+        cities = new ArrayList<>();
+        adapter = new CityAdapter(this, cities);
+        lvCities.setAdapter(adapter);
+
+        btnAddCity.setOnClickListener(v -> {
+            String cityName = etNewCity.getText().toString().trim();
+            if (!cityName.isEmpty()) {
+                City newCity = new City(cityName);
+                cities.add(newCity);
+                adapter.notifyDataSetChanged();
+                etNewCity.setText("");
+
+                // Récupérez immédiatement les données météo pour la nouvelle ville
+                fetchWeatherForCity(newCity);
+            } else {
+                Toast.makeText(this, "Entrez un nom de ville", Toast.LENGTH_SHORT).show();
             }
+        });
+
+        btnRefresh.setOnClickListener(v -> refreshWeatherData());
+
+        lvCities.setOnItemLongClickListener((parent, view, position, id) -> {
+            City city = cities.get(position);
+            showEditDialog(city);
+            return true;
+        });
+
+        lvCities.setOnItemClickListener((parent, view, position, id) -> {
+            cities.remove(position);
+            adapter.notifyDataSetChanged();
+            Toast.makeText(this, "Ville supprimée", Toast.LENGTH_SHORT).show();
         });
     }
 
-    private void getWeatherData(String cityName) {
+    private void refreshWeatherData() {
+        for (City city : cities) {
+            fetchWeatherForCity(city);
+        }
+    }
+
+    private void fetchWeatherForCity(City city) {
+        String cityName = city.getName();
         String url = "https://api.openweathermap.org/data/2.5/weather?q=" + cityName + "&units=metric&appid=" + API_KEY;
 
         OkHttpClient client = new OkHttpClient();
@@ -68,8 +99,7 @@ public class MainActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.e("ERROR", e.getMessage());
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Erreur réseau", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Erreur réseau pour " + cityName, Toast.LENGTH_SHORT).show());
             }
 
             @Override
@@ -81,24 +111,47 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject main = json.getJSONObject("main");
                         JSONObject weather = json.getJSONArray("weather").getJSONObject(0);
 
-                        String city = json.getString("name");
-                        String temp = main.getString("temp") + "°C";
+                        String temperature = main.getString("temp") + "°C";
                         String description = weather.getString("description");
 
-                        String result = "Ville : " + city + "\n"
-                                + "Température : " + temp + "\n"
-                                + "Description : " + description;
+                        // Mettez à jour les données météo de la ville
+                        city.setTemperature(temperature);
+                        city.setWeatherDescription(description);
 
-                        runOnUiThread(() -> tvWeatherResult.setText(result));
+                        // Mettez à jour la liste (adapter)
+                        runOnUiThread(() -> adapter.notifyDataSetChanged());
 
                     } catch (JSONException e) {
                         e.printStackTrace();
-                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Erreur dans les données", Toast.LENGTH_SHORT).show());
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Erreur dans les données reçues", Toast.LENGTH_SHORT).show());
                     }
                 } else {
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Ville non trouvée", Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Ville non trouvée : " + cityName, Toast.LENGTH_SHORT).show());
                 }
             }
         });
+    }
+
+    private void showEditDialog(City city) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Modifier le nom de la ville");
+
+        final EditText input = new EditText(this);
+        input.setText(city.getName());
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            String newName = input.getText().toString().trim();
+            if (!newName.isEmpty()) {
+                city.setName(newName);
+                adapter.notifyDataSetChanged();
+            } else {
+                Toast.makeText(this, "Le nom ne peut pas être vide", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Annuler", (dialog, which) -> dialog.cancel());
+
+        builder.show();
     }
 }

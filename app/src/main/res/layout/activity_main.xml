@@ -15,17 +15,25 @@
         android:padding="16dp">
 
         <EditText
-            android:id="@+id/etCityName"
+            android:id="@+id/etNewCity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Entrez le nom de la ville"
+            android:hint="Entrez le nom d'une ville"
             android:inputType="text" />
 
         <Button
-            android:id="@+id/btnGetWeather"
+            android:id="@+id/btnAddCity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Météo" />
+            android:text="Ajouter une ville"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rafraîchir les données météo"
+            android:layout_marginBottom="16dp" />
 
         <TextView
             android:id="@+id/tvWeatherResult"
@@ -34,6 +42,14 @@
             android:paddingTop="16dp"
             android:text="Résultat météo"
             android:textSize="16sp" />
+
+        <ListView
+            android:id="@+id/lvCities"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:divider="@android:color/darker_gray"
+            android:dividerHeight="1dp" />
 
     </LinearLayout>
 
