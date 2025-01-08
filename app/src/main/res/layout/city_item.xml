@@ -1,15 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ImageView
+        android:id="@+id/ivWeatherIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="Icône météo"
+        android:src="@drawable/placeholder_weather"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:orientation="vertical"
-        android:padding="8dp">
+        app:layout_constraintStart_toEndOf="@id/ivWeatherIcon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- Nom de la ville -->
         <TextView
             android:id="@+id/tvCityName"
             android:layout_width="match_parent"
@@ -18,12 +35,14 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
+        <!-- Température et description -->
         <TextView
             android:id="@+id/tvCityWeather"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Température | Description"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:layout_marginTop="4dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

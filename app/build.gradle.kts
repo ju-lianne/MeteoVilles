@@ -42,4 +42,6 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
+    implementation(libs.glide)
+    annotationProcessor(libs.compiler)
 }

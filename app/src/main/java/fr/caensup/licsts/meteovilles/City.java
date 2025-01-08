@@ -4,6 +4,15 @@ public class City {
     private String name;
     private String temperature;
     private String weatherDescription;
+    private String weatherIcon;
+
+    public String getWeatherIcon() {
+        return weatherIcon;
+    }
+
+    public void setWeatherIcon(String weatherIcon) {
+        this.weatherIcon = weatherIcon;
+    }
 
     public City(String name) {
         this.name = name;

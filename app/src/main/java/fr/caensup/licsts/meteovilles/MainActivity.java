@@ -105,7 +105,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void fetchWeatherForCity(City city) {
         String cityName = city.getName();
-        String url = "https://api.openweathermap.org/data/2.5/weather?q=" + cityName + "&lang=fr&units=metric&appid=" + API_KEY;
+        String url = "https://api.openweathermap.org/data/2.5/weather?q=" + cityName
+                + "&units=metric&lang=fr&appid=" + API_KEY;
 
         OkHttpClient client = new OkHttpClient();
 
@@ -130,10 +131,12 @@ public class MainActivity extends AppCompatActivity {
 
                         String temperature = main.getString("temp") + "°C";
                         String description = weather.getString("description");
+                        String icon = weather.getString("icon"); // Code de l'icône météo
 
                         // Mettez à jour les données météo de la ville
                         city.setTemperature(temperature);
                         city.setWeatherDescription(description);
+                        city.setWeatherIcon(icon); // Enregistrez le code de l'icône
 
                         // Mettez à jour la liste (adapter)
                         runOnUiThread(() -> adapter.notifyDataSetChanged());
@@ -215,4 +218,5 @@ public class MainActivity extends AppCompatActivity {
 
         adapter.notifyDataSetChanged(); // Rafraîchit l'affichage de la liste
     }
+
 }
