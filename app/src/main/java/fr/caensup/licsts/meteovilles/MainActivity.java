@@ -9,13 +9,17 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,33 +54,46 @@ public class MainActivity extends AppCompatActivity {
         adapter = new CityAdapter(this, cities);
         lvCities.setAdapter(adapter);
 
+        // Charger les villes sauvegardées
+        loadCitiesFromFile();
+
+        // Effectuer un refresh automatique des données météo au démarrage
+        refreshWeatherData();
+
+        // Ajouter une ville
         btnAddCity.setOnClickListener(v -> {
             String cityName = etNewCity.getText().toString().trim();
             if (!cityName.isEmpty()) {
                 City newCity = new City(cityName);
                 cities.add(newCity);
                 adapter.notifyDataSetChanged();
-                etNewCity.setText("");
+                saveCitiesToFile(); // Sauvegarde après ajout
 
-                // Récupérez immédiatement les données météo pour la nouvelle ville
+                // Récupérer les données météo immédiatement après ajout
                 fetchWeatherForCity(newCity);
+
+                etNewCity.setText("");
             } else {
                 Toast.makeText(this, "Entrez un nom de ville", Toast.LENGTH_SHORT).show();
             }
         });
 
+        // Bouton Refresh
         btnRefresh.setOnClickListener(v -> refreshWeatherData());
 
+        // Suppression d'une ville par clic simple
+        lvCities.setOnItemClickListener((parent, view, position, id) -> {
+            cities.remove(position);
+            adapter.notifyDataSetChanged();
+            saveCitiesToFile();
+            Toast.makeText(this, "Ville supprimée", Toast.LENGTH_SHORT).show();
+        });
+
+        // Modification d'une ville par clic long
         lvCities.setOnItemLongClickListener((parent, view, position, id) -> {
             City city = cities.get(position);
             showEditDialog(city);
             return true;
-        });
-
-        lvCities.setOnItemClickListener((parent, view, position, id) -> {
-            cities.remove(position);
-            adapter.notifyDataSetChanged();
-            Toast.makeText(this, "Ville supprimée", Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -88,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void fetchWeatherForCity(City city) {
         String cityName = city.getName();
-        String url = "https://api.openweathermap.org/data/2.5/weather?q=" + cityName + "&units=metric&appid=" + API_KEY;
+        String url = "https://api.openweathermap.org/data/2.5/weather?q=" + cityName + "&lang=fr&units=metric&appid=" + API_KEY;
 
         OkHttpClient client = new OkHttpClient();
 
@@ -145,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
             if (!newName.isEmpty()) {
                 city.setName(newName);
                 adapter.notifyDataSetChanged();
+                saveCitiesToFile(); // Sauvegarde après modification
             } else {
                 Toast.makeText(this, "Le nom ne peut pas être vide", Toast.LENGTH_SHORT).show();
             }
@@ -153,5 +171,48 @@ public class MainActivity extends AppCompatActivity {
         builder.setNegativeButton("Annuler", (dialog, which) -> dialog.cancel());
 
         builder.show();
+    }
+
+    private void saveCitiesToFile() {
+        StringBuilder data = new StringBuilder();
+        for (City city : cities) {
+            data.append(city.getName()).append("\n");
+        }
+
+        try {
+            FileOutputStream fos = openFileOutput("cities.txt", MODE_PRIVATE);
+            fos.write(data.toString().getBytes());
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Erreur lors de l'enregistrement des villes", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void loadCitiesFromFile() {
+        cities.clear(); // Nettoie la liste avant de charger depuis le fichier
+
+        try {
+            FileInputStream fis = openFileInput("cities.txt");
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader br = new BufferedReader(isr);
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                cities.add(new City(line));
+            }
+
+            br.close();
+            isr.close();
+            fis.close();
+        } catch (FileNotFoundException e) {
+            // Si le fichier n'existe pas encore, ce n'est pas une erreur critique
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Erreur lors du chargement des villes", Toast.LENGTH_SHORT).show();
+        }
+
+        adapter.notifyDataSetChanged(); // Rafraîchit l'affichage de la liste
     }
 }
