@@ -5,6 +5,19 @@ public class City {
     private String temperature;
     private String weatherDescription;
     private String weatherIcon;
+    private String country;
+    private double lat;
+    private double lon;
+
+    public City(String name, String country, double lat, double lon) {
+        this.name = name;
+        this.country = country;
+        this.lat = lat;
+        this.lon = lon;
+        this.temperature = "N/A"; // Par défaut
+        this.weatherDescription = "N/A"; // Par défaut
+        this.weatherIcon = null; // Par défaut
+    }
 
     public String getWeatherIcon() {
         return weatherIcon;
@@ -42,5 +55,29 @@ public class City {
 
     public void setWeatherDescription(String weatherDescription) {
         this.weatherDescription = weatherDescription;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public double getLat() {
+        return lat;
+    }
+
+    public void setLat(double lat) {
+        this.lat = lat;
+    }
+
+    public double getLon() {
+        return lon;
+    }
+
+    public void setLon(double lon) {
+        this.lon = lon;
     }
 }
